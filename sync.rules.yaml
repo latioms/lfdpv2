@@ -1,0 +1,8 @@
+# Define sync rules to control which data is synced to each user
+# See the docs: https://docs.powersync.com/usage/sync-rules
+bucket_definitions:
+  global:
+    data:
+      # Sync all rows
+      - SELECT * FROM categories 
+      - SELECT * FROM products

@@ -1,117 +1,175 @@
 // app/categories/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePowerSync } from '@/hooks/usePowerSync';
-import { v4 as uuidv4 } from 'uuid';
+import { useState, useEffect } from 'react';
+import { useServices } from '@/hooks/useService';
+import { CategoryRecord } from '@/services/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
-// Composant principal pour afficher et gérer les catégories
 export default function CategoriesPage() {
-  // Utilisation du hook personnalisé pour obtenir l'instance de PowerSync
-  const powerSync = usePowerSync();
-  const [categories, setCategories] = useState<any[]>([]); // État pour stocker les catégories
-  const [loading, setLoading] = useState(true); // État pour gérer le chargement
-  const [newCategory, setNewCategory] = useState({ name: '' }); // État pour la nouvelle catégorie
+  const { categories: categoriesService } = useServices();
+  const { toast } = useToast();
+  
+  const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newCategory, setNewCategory] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  // Effet pour récupérer les catégories lors du montage du composant
+  // Charger les catégories
+  const loadCategories = async () => {
+    try {
+      const data = await categoriesService.getAll();
+      setCategories(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load categories');
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load categories'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        if (!powerSync) {
-          throw new Error('PowerSync is not connected');
-        }
-        // Récupération de toutes les catégories
-        const result = await powerSync.getAll('SELECT * FROM categories');
-        setCategories(result);
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    loadCategories();
+  }, []);
 
-    fetchCategories();
-  }, [powerSync]);
+  // Ajouter une catégorie
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategory.trim()) return;
 
-  // Fonction pour ajouter une nouvelle catégorie
-  const addCategory = async () => {
     try {
-      if (!powerSync) {
-        throw new Error('PowerSync is not connected');
-      }
-      const newId = uuidv4(); // Génération d'un ID unique
-      // Insertion de la nouvelle catégorie dans la base de données
-      await powerSync.execute('INSERT INTO categories (id, name, created_at) VALUES (?, ?, ?)', [newId, newCategory.name, new Date().toISOString()]);
-      setNewCategory({ name: '' }); // Réinitialisation de l'état de la nouvelle catégorie
-      // Mise à jour de la liste des catégories
-      const updatedCategories = await powerSync.getAll('SELECT * FROM categories');
-      setCategories(updatedCategories);
-    } catch (error) {
-      console.error('Failed to add category:', error);
+      await categoriesService.create(newCategory.trim());
+      await loadCategories();
+      setNewCategory('');
+      toast({
+        title: 'Success',
+        description: 'Category created successfully'
+      });
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create category'
+      });
     }
   };
 
-  // Fonction pour supprimer une catégorie
-  const deleteCategory = async (id: string) => {
+  // Supprimer une catégorie
+  const handleDeleteCategory = async (id: string) => {
     try {
-      if (!powerSync) {
-        throw new Error('PowerSync is not connected');
-      }
-      // Suppression de la catégorie de la base de données
-      await powerSync.execute('DELETE FROM categories WHERE id = ?', [id]);
-      // Mise à jour de la liste des catégories
-      const updatedCategories = await powerSync.getAll('SELECT * FROM categories');
-      setCategories(updatedCategories);
-    } catch (error) {
-      console.error('Failed to delete category:', error);
+      await categoriesService.delete(id);
+      await loadCategories();
+      toast({
+        title: 'Success',
+        description: 'Category deleted successfully'
+      });
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete category'
+      });
     }
   };
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Categories</h1>
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Category name"
-          value={newCategory.name}
-          onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-          className="border p-2 mr-2"
-        />
-        <button onClick={addCategory} className="bg-blue-500 text-white px-4 py-2 rounded">
-          Add Category
-        </button>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Categories</h1>
       </div>
+
+      <form onSubmit={handleAddCategory} className="flex gap-4">
+        <Input
+          type="text"
+          placeholder="New category name"
+          value={newCategory}
+          onChange={(e) => setNewCategory(e.target.value)}
+          className="max-w-xs"
+        />
+        <Button type="submit" disabled={!newCategory.trim()}>
+          Add Category
+        </Button>
+      </form>
+
       {loading ? (
-        <p>Loading categories...</p>
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
       ) : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              <th className="border p-2 text-left">ID</th>
-              <th className="border p-2 text-left">Name</th>
-              <th className="border p-2 text-left">Created At</th>
-              <th className="border p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {categories.map((category) => (
-              <tr key={category.id}>
-                <td className="border p-2">{category.id}</td>
-                <td className="border p-2">{category.name}</td>
-                <td className="border p-2">{category.created_at}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteCategory(category.id)}
-                    className="bg-red-500 text-white px-4 py-2 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
+              <TableRow key={category.id}>
+                <TableCell>{category.name}</TableCell>
+                <TableCell>
+                  {new Date(category.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete {category.name}? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteCategory(category.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+            {categories.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                  No categories found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       )}
     </div>
   );
