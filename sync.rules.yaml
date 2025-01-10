@@ -6,3 +6,9 @@ bucket_definitions:
       # Sync all rows
       - SELECT * FROM categories 
       - SELECT * FROM products
+      - SELECT * FROM users
+      - SELECT * FROM customers
+      - SELECT * FROM orders
+      - SELECT * FROM order_items
+      - SELECT * FROM reports
+      - SELECT * FROM stock_movements
