@@ -71,4 +71,16 @@ export class ProductsService extends BaseService<ProductRecord> {
       throw error;
     }
   }
+
+  async search(query: string): Promise<ProductRecord[]> {
+    try {
+      return await this.powerSync.getAll(
+        'SELECT * FROM products WHERE name LIKE ? OR description LIKE ? ORDER BY name',
+        [`%${query}%`, `%${query}%`]
+      );
+    } catch (error) {
+      console.error('Failed to search products:', error);
+      throw error;
+    }
+  }
 } 
