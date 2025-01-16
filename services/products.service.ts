@@ -31,13 +31,13 @@ export class ProductsService extends BaseService<ProductRecord> {
   async update(id: string, product: Partial<Omit<ProductRecord, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
     try {
       const updates = Object.entries(product)
-        .filter(([_, value]) => value !== undefined)
+        .filter(([, value]) => value !== undefined)
         .map(([key]) => `${key} = ?`)
         .join(', ');
 
       const values = Object.entries(product)
-        .filter(([_, value]) => value !== undefined)
-        .map(([_, value]) => value);
+        .filter(([, value]) => value !== undefined)
+        .map(([, value]) => value);
 
       await this.powerSync.execute(
         `UPDATE products SET ${updates}, updated_at = ? WHERE id = ?`,

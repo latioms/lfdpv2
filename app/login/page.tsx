@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GalleryVerticalEnd, Github } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { GalleryVerticalEnd } from 'lucide-react';
 import { SupabaseConnector } from '@/lib/powersync/SupabaseConnector';
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,8 +28,8 @@ export default function LoginPage() {
     try {
       await connector.login(email, password);
       router.push('/categories');
-    } catch (err: any) {
-      setError(err.message || 'La connexion a échoué');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'La connexion a échoué');
     } finally {
       setLoading(false);
     }
@@ -38,18 +39,18 @@ export default function LoginPage() {
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
-          <a href="#" className="flex items-center gap-2 font-medium">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <GalleryVerticalEnd className="size-4" />
             </div>
-            La force du planteur
-          </a>
+            LFDP.
+          </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
             <form onSubmit={handleLogin} className="flex flex-col gap-6">
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Connexion</h1>
+                <h1 className="text-2xl font-bold">La force du planteur.</h1>
                 <p className="text-balance text-sm text-muted-foreground">
                   Entrez vos identifiants pour vous connecter
                 </p>
@@ -77,7 +78,7 @@ export default function LoginPage() {
                   <div className="flex items-center">
                     <Label htmlFor="password">Mot de passe</Label>
                     <a
-                      href="#"
+                      href="/contact-admin"
                       className="ml-auto text-sm underline-offset-4 hover:underline"
                     >
                       Mot de passe oublié ?
@@ -97,9 +98,9 @@ export default function LoginPage() {
 
               </div>
               <div className="text-center text-sm">
-                Vous n'avez pas de compte ?{" "}
-                <a href="#" className="underline underline-offset-4">
-                  Contacter l'admin
+                Vous n&apos;avez pas de compte ?{" "}
+                <a href="/contact" className="underline underline-offset-4">
+                  Contacter l&apos;admin
                 </a>
               </div>
             </form>
@@ -107,10 +108,13 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="relative hidden bg-muted lg:block">
-        <img
+      <Image
+          width={500}
+          height={500}
           src="/LFDP.png"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          alt="La Force du Planteur Logo"
+          fill
+          className="object-cover dark:brightness-[0.2] dark:grayscale"
         />
       </div>
     </div>

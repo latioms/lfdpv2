@@ -24,13 +24,13 @@ export class CustomersService extends BaseService<CustomerRecord> {
   async update(id: string, customer: Partial<Omit<CustomerRecord, 'id' | 'created_at'>>): Promise<void> {
     try {
       const updates = Object.entries(customer)
-        .filter(([_, value]) => value !== undefined)
+        .filter(([, value]) => value !== undefined)
         .map(([key]) => `${key} = ?`)
         .join(', ');
 
       const values = Object.entries(customer)
-        .filter(([_, value]) => value !== undefined)
-        .map(([_, value]) => value);
+        .filter(([, value]) => value !== undefined)
+        .map(([, value]) => value);
 
       await this.powerSync.execute(
         `UPDATE customers SET ${updates} WHERE id = ?`,

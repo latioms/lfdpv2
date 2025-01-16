@@ -1,45 +1,64 @@
 // app/categories/page.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useServices } from '@/hooks/useService';
-import { CategoryRecord } from '@/services/types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from "react";
+import { useServices } from "@/hooks/useService";
+import { CategoryRecord } from "@/services/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CategoriesPage() {
   const { categories: categoriesService } = useServices();
   const { toast } = useToast();
-  
+
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newCategory, setNewCategory] = useState('');
+  const [newCategory, setNewCategory] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Charger les catégories
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const data = await categoriesService.getAll();
       setCategories(data);
       setError(null);
-    } catch (err) {
-      setError('Failed to load categories');
+    } catch (err: unknown) {
+      setError("Failed to load categories");
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load categories'
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error 
+        ? err.message 
+        : 'Failed to load categories',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoriesService, toast]);
 
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [loadCategories]);
 
   // Ajouter une catégorie
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -49,16 +68,17 @@ export default function CategoriesPage() {
     try {
       await categoriesService.create(newCategory.trim());
       await loadCategories();
-      setNewCategory('');
+      setNewCategory("");
       toast({
-        title: 'Success',
-        description: 'Category created successfully'
+        title: "Success",
+        description: "Category created successfully",
       });
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to create category'
+        variant: "destructive",
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to create category",
       });
     }
   };
@@ -69,14 +89,15 @@ export default function CategoriesPage() {
       await categoriesService.delete(id);
       await loadCategories();
       toast({
-        title: 'Success',
-        description: 'Category deleted successfully'
+        title: "Success",
+        description: "Category deleted successfully",
       });
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to delete category'
+        variant: "destructive",
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to delete category",
       });
     }
   };
@@ -145,7 +166,8 @@ export default function CategoriesPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Category</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete {category.name}? This action cannot be undone.
+                          Are you sure you want to delete {category.name}? This
+                          action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -163,7 +185,10 @@ export default function CategoriesPage() {
             ))}
             {categories.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={3}
+                  className="text-center py-8 text-gray-500"
+                >
                   No categories found
                 </TableCell>
               </TableRow>
