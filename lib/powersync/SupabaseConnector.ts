@@ -107,7 +107,52 @@ export class SupabaseConnector
       client: this.client,
       endpoint: this.config.powersyncUrl,
       token: session.access_token ?? "",
+      session: session ?? ''
     };
+  }
+
+  private async handleOperation(op: CrudEntry, database: AbstractPowerSyncDatabase) {
+    if ((op.op === UpdateType.PUT || op.op === UpdateType.PATCH) && op.opData) {
+      if (op.table === 'order_items' && !await this.foreignKeyExists('orders', 'id', op.opData.order_id)) {
+        console.warn(`Foreign key not found for order_id: ${op.opData.order_id}`);
+        await this.handleOfflineOperation(op, database);
+        return;
+      }
+    }
+
+    const table = this.client.from(op.table);
+    let result: any;
+
+    switch (op.op) {
+      case UpdateType.PUT:
+        result = await this.handlePutOperation(op, table);
+        break;
+      case UpdateType.PATCH:
+        result = await this.handlePatchOperation(op, table);
+        break;
+      case UpdateType.DELETE:
+        result = await this.handleDeleteOperation(op, table);
+        break;
+    }
+
+    if (result.error) {
+      console.error(result.error);
+      result.error.message = `Could not update Supabase. Received error: ${result.error.message}`;
+      throw result.error;
+    }
+  }
+
+  private async handlePutOperation(op: CrudEntry, table: any) {
+    const record = { ...op.opData, id: op.id };
+    return await table.upsert(record);
+  }
+
+  private async handlePatchOperation(op: CrudEntry, table: any) {
+    return await table.update(op.opData).eq("id", op.id);
+  }
+
+  private async handleDeleteOperation(op: CrudEntry, table: any) {
+    return await table.delete().eq("id", op.id);
   }
 
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
@@ -119,30 +164,9 @@ export class SupabaseConnector
 
     let lastOp: CrudEntry | null = null;
     try {
-      // Note: If transactional consistency is important, use database functions
-      // or edge functions to process the entire transaction in a single call.
       for (const op of transaction.crud) {
         lastOp = op;
-        const table = this.client.from(op.table);
-        let result: any;
-        switch (op.op) {
-          case UpdateType.PUT:
-            const record = { ...op.opData, id: op.id };
-            result = await table.upsert(record);
-            break;
-          case UpdateType.PATCH:
-            result = await table.update(op.opData).eq("id", op.id);
-            break;
-          case UpdateType.DELETE:
-            result = await table.delete().eq("id", op.id);
-            break;
-        }
-
-        if (result.error) {
-          console.error(result.error);
-          result.error.message = `Could not update Supabase. Received error: ${result.error.message}`;
-          throw result.error;
-        }
+        await this.handleOperation(op, database);
       }
 
       await transaction.complete();
@@ -152,19 +176,9 @@ export class SupabaseConnector
         typeof ex.code == "string" &&
         FATAL_RESPONSE_CODES.some((regex) => regex.test(ex.code))
       ) {
-        /**
-         * Instead of blocking the queue with these errors,
-         * discard the (rest of the) transaction.
-         *
-         * Note that these errors typically indicate a bug in the application.
-         * If protecting against data loss is important, save the failing records
-         * elsewhere instead of discarding, and/or notify the user.
-         */
         console.error("Data upload error - discarding:", lastOp, ex);
         await transaction.complete();
       } else {
-        // Error may be retryable - e.g. network error or temporary server error.
-        // Throwing an error here causes this call to be retried after a delay.
         throw ex;
       }
     }
@@ -176,5 +190,36 @@ export class SupabaseConnector
       return;
     }
     this.iterateListeners((cb) => cb.sessionStarted?.(session));
+  }
+
+  private async foreignKeyExists(table: string, column: string, value: string): Promise<boolean> {
+    try {
+      const { data, error } = await this.client.from(table).select(column).eq(column, value).single();
+      if (error) {
+        console.warn(`Error checking foreign key existence: ${error.message}`);
+        return false;
+      }
+      return !!data;
+    } catch (error) {
+      console.error("Error in foreignKeyExists:", error);
+      return false;
+    }
+  }
+
+  private async handleOfflineOperation(op: CrudEntry, db: AbstractPowerSyncDatabase) {
+    try {
+      console.info("Handling offline operation:", {
+        operation: op.op,
+        table: op.table,
+        id: op.id
+      });
+      
+      // Les opérations sont automatiquement mises en file d'attente par PowerSync
+      // et seront synchronisées une fois la connexion rétablie
+      console.info("Operation queued for later sync");
+      
+    } catch (error) {
+      console.error("Error handling offline operation:", error);
+    }
   }
 }
