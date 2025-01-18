@@ -1,3 +1,5 @@
+'use client'
+import React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -13,8 +15,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { usePathname } from "next/navigation"
 
-export default function Page() {
+export const Sidebar = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -25,26 +28,33 @@ export default function Page() {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Building Your Application
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                </BreadcrumbItem>
+                {usePathname()
+                  .split('/')
+                  .filter(Boolean)
+                  .map((path, index, array) => (
+                    <React.Fragment key={path}>
+                      <BreadcrumbItem className="hidden md:block">
+                        {index === array.length - 1 ? (
+                          <BreadcrumbPage>
+                            {path.charAt(0).toUpperCase() + path.slice(1)}
+                          </BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink href={`/${array.slice(0, index + 1).join('/')}`}>
+                            {path.charAt(0).toUpperCase() + path.slice(1)}
+                          </BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                      {index < array.length - 1 && (
+                        <BreadcrumbSeparator className="hidden md:block" />
+                      )}
+                    </React.Fragment>
+                  ))}
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="aspect-video rounded-xl bg-muted/50" />
-            <div className="aspect-video rounded-xl bg-muted/50" />
-            <div className="aspect-video rounded-xl bg-muted/50" />
-          </div>
-          <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+            {children}
         </div>
       </SidebarInset>
     </SidebarProvider>
