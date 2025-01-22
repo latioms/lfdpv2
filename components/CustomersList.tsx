@@ -119,11 +119,11 @@ export default function CustomersList() {
         
         <Dialog>
           <DialogTrigger asChild>
-            <Button>Add New Customer</Button>
+            <Button>Ajouter un client</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
+              <DialogTitle>Ajouter un nouveau client</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleAddCustomer} className="space-y-4">
               <Input
@@ -187,7 +187,7 @@ export default function CustomersList() {
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Edit Customer</DialogTitle>
+                      <DialogTitle>Modifier le client</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleUpdateCustomer} className="space-y-4">
                       <Input
@@ -240,18 +240,17 @@ export default function CustomersList() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+                      <AlertDialogTitle>Supprimer le client</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete this customer? This action
-                        cannot be undone.
+                        Êtes-vous sûr de vouloir supprimer ce client? Cette action ne peut pas être annulée.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDeleteCustomer(customer.id)}
                       >
-                        Delete
+                        Supprimer
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

@@ -6,6 +6,7 @@ import { useServices } from "@/hooks/useService";
 import { CategoryRecord } from "@/services/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -25,11 +26,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
 
 export default function CategoriesPage() {
   const { categories: categoriesService } = useServices();
-  const { toast } = useToast();
 
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,15 +40,13 @@ export default function CategoriesPage() {
     try {
       const data = await categoriesService.getAll();
       setCategories(data);
+      console.log(data);
       setError(null);
     } catch (err: unknown) {
       setError("Failed to load categories");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err instanceof Error 
-        ? err.message 
-        : 'Failed to load categories',
+      toast.error("Failed to load categories", {
+        description:
+          err instanceof Error ? err.message : "Failed to load categories",
       });
     } finally {
       setLoading(false);
@@ -58,7 +55,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     loadCategories();
-  }, [loadCategories]);
+  }, []);
 
   // Ajouter une catégorie
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -69,16 +66,11 @@ export default function CategoriesPage() {
       await categoriesService.create(newCategory.trim());
       await loadCategories();
       setNewCategory("");
-      toast({
-        title: "Success",
-        description: "Category created successfully",
-      });
+      toast.success("Catégorie ajoutée avec succès");
     } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.error("Erreur d'ajout", {
         description:
-          err instanceof Error ? err.message : "Failed to create category",
+          err instanceof Error ? err.message : "Erreur d'ajout",
       });
     }
   };
@@ -88,16 +80,11 @@ export default function CategoriesPage() {
     try {
       await categoriesService.delete(id);
       await loadCategories();
-      toast({
-        title: "Success",
-        description: "Category deleted successfully",
-      });
+      toast.info('Catégorie supprimée');
     } catch (err: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast.message('Erreur de suppression',{
         description:
-          err instanceof Error ? err.message : "Failed to delete category",
+          err instanceof Error ? err.message : "Erreur de suppression",
       });
     }
   };
@@ -119,19 +106,19 @@ export default function CategoriesPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Categories</h1>
+        <h1 className="text-2xl font-bold">Catégories</h1>
       </div>
 
       <form onSubmit={handleAddCategory} className="flex gap-4">
         <Input
           type="text"
-          placeholder="New category name"
+          placeholder="Nom de la nouvelle catégorie"
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
           className="max-w-xs"
         />
         <Button type="submit" disabled={!newCategory.trim()}>
-          Add Category
+          Ajouter une catégorie
         </Button>
       </form>
 
@@ -143,8 +130,8 @@ export default function CategoriesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Created At</TableHead>
+              <TableHead>Nom</TableHead>
+              <TableHead>Créé le</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -159,23 +146,23 @@ export default function CategoriesPage() {
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm">
-                        Delete
+                        Supprimer
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                        <AlertDialogTitle>Supprimer la catégorie</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete {category.name}? This
-                          action cannot be undone.
+                          Êtes-vous sûr de vouloir supprimer {category.name}? Cette
+                          action ne peut pas être annulée.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteCategory(category.id)}
                         >
-                          Delete
+                          Supprimer
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -189,7 +176,7 @@ export default function CategoriesPage() {
                   colSpan={3}
                   className="text-center py-8 text-gray-500"
                 >
-                  No categories found
+                  Aucune catégorie trouvée
                 </TableCell>
               </TableRow>
             )}
