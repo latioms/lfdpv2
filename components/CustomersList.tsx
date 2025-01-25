@@ -2,10 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useServices } from "@/hooks/useService";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CustomerRecord } from "@/services/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Pencil, Trash2, UserPlus, Mail, Phone, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function CustomersList() {
+  const isMobile = useIsMobile();
   const { customers: customersService } = useServices();
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +73,8 @@ export default function CustomersList() {
       await customersService.create(newCustomer);
       setNewCustomer({ name: "", email: "", phone: "", address: "" });
       await loadCustomers();
+      // close dialog
+
       toast.success("Customer added successfully");
     } catch (err) {
       toast.error("Failed to add customer");
@@ -111,7 +117,7 @@ export default function CustomersList() {
     <div className="space-y-6">
       <div className="flex gap-4 justify-between">
         <Input
-          placeholder="Search customers..."
+          placeholder="Rechercher un client..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-xs"
@@ -119,7 +125,9 @@ export default function CustomersList() {
         
         <Dialog>
           <DialogTrigger asChild>
-            <Button>Ajouter un client</Button>
+            <Button className="bg-green-600 hover:bg-green-700">
+              {isMobile ? <UserPlus size={20} /> : "Ajouter un client"}
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -163,26 +171,45 @@ export default function CustomersList() {
 
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-slate-50">
             <TableHead>Nom</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Address</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead>Adresse</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {customers.map((customer) => (
-            <TableRow key={customer.id}>
-              <TableCell>{customer.name}</TableCell>
-              <TableCell>{customer.email}</TableCell>
-              <TableCell>{customer.phone}</TableCell>
-              <TableCell>{customer.address}</TableCell>
-              <TableCell className="space-x-2">
+            <TableRow key={customer.id} className="hover:bg-slate-50">
+              <TableCell className="font-semibold text-slate-500">{customer.name}</TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Mail size={16} className="text-gray-500" />
+                    <span className="text-sm">{customer.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone size={16} className="text-gray-500" />
+                    <span className="text-sm">{customer.phone}</span>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} className="text-gray-500" />
+                  <span className="text-sm">{customer.address}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-right space-x-2">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      Edit
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setEditingCustomer(customer)}
+                      className="hover:bg-blue-50"
+                    >
+                      {isMobile ? <Pencil size={16} /> : "Modifier"}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -234,8 +261,12 @@ export default function CustomersList() {
 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      Delete
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      className="hover:bg-red-700"
+                    >
+                      {isMobile ? <Trash2 size={16} /> : "Supprimer"}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

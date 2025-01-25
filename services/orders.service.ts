@@ -117,4 +117,67 @@ export class OrdersService extends BaseService<OrderRecord> {
       throw error;
     }
   }
-} 
+
+  async getAllWithDetails(): Promise<OrderRecord[]> {
+    try {
+      return await this.powerSync.getAll(`
+        SELECT 
+          o.*,
+          json_group_array(
+            json_object(
+              'product_id', oi.product_id,
+              'quantity', oi.quantity,
+              'unit_price', oi.unit_price,
+              'product_name', p.name
+            )
+          ) as items
+        FROM orders o
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.id
+        GROUP BY o.id
+        ORDER BY o.created_at DESC
+      `);
+    } catch (error) {
+      console.error('Failed to fetch orders with details:', error);
+      throw error;
+    }
+  }
+
+  async getOrdersWithItemsAndProducts(): Promise<{
+    orders: OrderRecord[];
+    items: Array<{
+      order_id: string;
+      product_id: string;
+      product_name: string;
+      quantity: number;
+      unit_price: number;
+    }>;
+  }> {
+    try {
+      const [orders, items] = await Promise.all([
+        this.powerSync.getAll<OrderRecord>('SELECT * FROM orders'),
+        this.powerSync.getAll<{
+          order_id: string;
+          product_id: string;
+          product_name: string;
+          quantity: number;
+          unit_price: number;
+        }>(`
+          SELECT 
+            oi.order_id,
+            oi.product_id,
+            p.name as product_name,
+            oi.quantity,
+            oi.unit_price
+          FROM order_items oi
+          JOIN products p ON p.id = oi.product_id
+        `)
+      ]);
+
+      return { orders, items };
+    } catch (error) {
+      console.error('Failed to fetch orders with items:', error);
+      throw error;
+    }
+  }
+}
