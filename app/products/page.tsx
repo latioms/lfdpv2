@@ -7,6 +7,7 @@ import { ProductRecord, CategoryRecord } from '@/services/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -22,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -31,7 +32,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AlertCircle } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  AlertCircle,
+  Plus,
+  Package,
+  RefreshCw
+} from 'lucide-react';
 
 interface ProductFormData {
   name: string;
@@ -65,7 +73,6 @@ const initialFormData: ProductFormData = {
 
 export default function ProductsPage() {
   const { products: productsService, categories: categoriesService, stock: stockService } = useServices();
-  const { toast } = useToast();
 
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
@@ -75,19 +82,15 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isEditing, setIsEditing] = useState<string | null>(null);
 
-
-  // =======================================================================
   const [isRestockDialogOpen, setIsRestockDialogOpen] = useState(false);
   const [restockFormData, setRestockFormData] = useState<RestockFormData>(initialRestockFormData);
 
-  // Function to get products below threshold
   const getLowStockProducts = () => {
     return products.filter(product => 
       product.stock_quantity <= product.alert_threshold
     );
   };
 
-  // Handle restock form input changes
   const handleRestockInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -95,22 +98,16 @@ export default function ProductsPage() {
     setRestockFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle restock product selection
   const handleRestockProductSelect = (productId: string) => {
     setRestockFormData(prev => ({ ...prev, productId }));
     setIsRestockDialogOpen(true);
   };
 
-  // Handle restock submission
   const handleRestockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!restockFormData.productId || !restockFormData.quantity || Number(restockFormData.quantity) <= 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Validation Error',
-        description: 'Please enter a valid quantity',
-      });
+      toast.error('Veuillez entrer une quantité valide');
       return;
     }
 
@@ -118,7 +115,7 @@ export default function ProductsPage() {
       await stockService.recordMovement(
         restockFormData.productId,
         Number(restockFormData.quantity),
-        'restock',
+        'purchase',
         restockFormData.description || 'Restock'
       );
 
@@ -126,26 +123,16 @@ export default function ProductsPage() {
       setRestockFormData(initialRestockFormData);
       setIsRestockDialogOpen(false);
       
-      toast({
-        title: 'Success',
-        description: 'Stock updated successfully',
-      });
+      toast.success('Stock mis à jour avec succès');
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update stock',
-      });
+      toast.error('Échec de la mise à jour du stock');
     }
   };
 
-// =====================================================================
-  // Charger les données initiales
   useEffect(() => {
     loadData();
   }, []);
 
-  // Charger les produits en fonction de la catégorie sélectionnée
   useEffect(() => {
     loadProducts();
   },[selectedCategory]);
@@ -157,11 +144,7 @@ export default function ProductsPage() {
       await loadProducts();
       console.log(categoriesData)
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load initial data',
-      });
+      toast.error('Échec du chargement des données initiales');
     } finally {
       setLoading(false);
     }
@@ -177,11 +160,7 @@ export default function ProductsPage() {
       }
       setProducts(productsData);
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load products',
-      });
+      toast.error('Échec du chargement des produits');
     }
   };
 
@@ -197,13 +176,13 @@ export default function ProductsPage() {
   };
 
   const validateForm = (data: ProductFormData) => {
-    if (!data.name.trim()) return 'Name is required';
-    if (isNaN(Number(data.price)) || Number(data.price) <= 0) return 'Invalid price';
+    if (!data.name.trim()) return 'Le nom est requis';
+    if (isNaN(Number(data.price)) || Number(data.price) <= 0) return 'Prix invalide';
     if (isNaN(Number(data.stock_quantity)) || Number(data.stock_quantity) < 0)
-      return 'Invalid stock quantity';
+      return 'Quantité en stock invalide';
     if (isNaN(Number(data.alert_threshold)) || Number(data.alert_threshold) < 0)
-      return 'Invalid alert threshold';
-    if (!data.category_id) return 'Category is required';
+      return 'Seuil d\'alerte invalide';
+    if (!data.category_id) return 'La catégorie est requise';
     return null;
   };
 
@@ -211,11 +190,7 @@ export default function ProductsPage() {
     e.preventDefault();
     const validationError = validateForm(formData);
     if (validationError) {
-      toast({
-        variant: 'destructive',
-        title: 'Validation Error',
-        description: validationError,
-      });
+      toast.error(validationError);
       return;
     }
 
@@ -244,16 +219,9 @@ export default function ProductsPage() {
       setFormData(initialFormData);
       setIsDialogOpen(false);
       setIsEditing(null);
-      toast({
-        title: 'Success',
-        description: `Product ${isEditing ? 'updated' : 'created'} successfully`,
-      });
+      toast.success(`Produit ${isEditing ? 'modifié' : 'créé'} avec succès`);
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: `Failed to ${isEditing ? 'update' : 'create'} product`,
-      });
+      toast.error(`Échec de ${isEditing ? 'modification' : 'création'} du produit`);
     }
   };
 
@@ -271,20 +239,13 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       try {
         await productsService.delete(id);
         await loadProducts();
-        toast({
-          title: 'Success',
-          description: 'Product deleted successfully',
-        });
+        toast.success('Produit supprimé avec succès');
       } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to delete product',
-        });
+        toast.error('Échec de la suppression du produit');
       }
     }
   };
@@ -292,7 +253,7 @@ export default function ProductsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Produits</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Produits</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button
@@ -300,8 +261,10 @@ export default function ProductsPage() {
                 setFormData(initialFormData);
                 setIsEditing(null);
               }}
+              className="bg-primary hover:bg-primary/90"
             >
-              Ajouter un produit
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Ajouter un produit</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
@@ -434,11 +397,75 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* Restock Dialog */}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nom</TableHead>
+            <TableHead>Catégorie</TableHead>
+            <TableHead>Prix</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead>Seuil</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {products.map((product) => (
+            <TableRow key={product.id} className="hover:bg-gray-50">
+              <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell>
+                <Badge variant="outline" className="bg-gray-100">
+                  {categories.find(c => c.id === product.category_id)?.name}
+                </Badge>
+              </TableCell>
+              <TableCell className="font-medium">
+                <Badge variant="secondary">
+                  ${product.price.toFixed(2)}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge 
+                  variant={product.stock_quantity <= product.alert_threshold ? "destructive" : "success"}
+                  className="gap-1 items-center"
+                >
+                  <Package className="w-3 h-3" />
+                  {product.stock_quantity}
+                </Badge>
+              </TableCell>
+              <TableCell>{product.alert_threshold}</TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleEdit(product)}
+                    className="h-8 w-8"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Modifier</span>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDelete(product.id)}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Supprimer</span>
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
       <Dialog open={isRestockDialogOpen} onOpenChange={setIsRestockDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Réapprovisionner le stock</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5" />
+              Réapprovisionner le stock
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleRestockSubmit} className="space-y-4">
             <div className="grid gap-4">
@@ -476,66 +503,6 @@ export default function ProductsPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nom</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Prix</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Seuil d'alerte</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>
-                  {categories.find(c => c.id === product.category_id)?.name}
-                </TableCell>
-                <TableCell>${product.price.toFixed(2)}</TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      product.stock_quantity <= product.alert_threshold
-                        ? 'text-red-500 font-medium'
-                        : ''
-                    }
-                  >
-                    {product.stock_quantity}
-                  </span>
-                </TableCell>
-                <TableCell>{product.alert_threshold}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(product)}
-                    >
-                      Modifier
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      Supprimer
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
     </div>
   );
 }
