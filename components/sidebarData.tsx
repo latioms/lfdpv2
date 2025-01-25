@@ -36,9 +36,9 @@ export const data = {
     {
       title: "Analyses",
       items: [
-        { title: "Statistiques", url: "/dashboard/stats", icon: BarChart2 },
-        { title: "Journal", url: "/journal", icon: ClipboardList },
-        { title: "Rapport", url: "/dashboard/rapport", icon: FileText },
+        { title: "Statistiques", url: "/stats", icon: BarChart2 },
+        { title: "Journal", url: "/logs", icon: ClipboardList },
+        { title: "Rapport", url: "/reports", icon: FileText },
       ],
     },
   ],
