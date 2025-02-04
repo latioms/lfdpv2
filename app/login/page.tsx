@@ -109,8 +109,6 @@ export default function LoginPage() {
       </div>
       <div className="relative hidden bg-muted lg:block">
       <Image
-          width={500}
-          height={500}
           src="/LFDP.png"
           alt="La Force du Planteur Logo"
           fill
