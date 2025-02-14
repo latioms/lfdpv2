@@ -25,6 +25,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useRouter } from 'next/navigation';
+import { SupabaseConnector } from '@/lib/powersync/SupabaseConnector';
+
+const connector = new SupabaseConnector();
 
 export function NavUser({
   user,
@@ -36,6 +40,16 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await connector.logout();
+      router.push('/login');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -98,7 +112,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Déconnexion
             </DropdownMenuItem>

@@ -1,7 +1,7 @@
 // app/products/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useServices } from '@/hooks/useService';
 import { ProductRecord, CategoryRecord } from '@/services/types';
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,6 @@ export default function ProductsPage() {
 
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -124,33 +123,13 @@ export default function ProductsPage() {
       setIsRestockDialogOpen(false);
       
       toast.success('Stock mis à jour avec succès');
-    } catch (error) {
+    } catch { 
       toast.error('Échec de la mise à jour du stock');
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    loadProducts();
-  },[selectedCategory]);
-
-  const loadData = async () => {
-    try {
-      const categoriesData = await categoriesService.getAll();
-      setCategories(categoriesData);
-      await loadProducts();
-      console.log(categoriesData)
-    } catch (error) {
-      toast.error('Échec du chargement des données initiales');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadProducts = async () => {
+  // Move loadProducts before loadData and wrap in useCallback
+  const loadProducts = useCallback(async () => {
     try {
       let productsData;
       if (selectedCategory === 'all') {
@@ -159,9 +138,31 @@ export default function ProductsPage() {
         productsData = await productsService.getByCategory(selectedCategory);
       }
       setProducts(productsData);
-    } catch (error) {
+    } catch { 
       toast.error('Échec du chargement des produits');
     }
+  }, [selectedCategory, productsService]);
+
+  // Keep loadData as useCallback but update dependencies
+  const loadData = useCallback(async () => {
+    try {
+      const categoriesData = await categoriesService.getAll();
+      setCategories(categoriesData);
+      await loadProducts();
+    } catch (err) {
+      handleError(err, 'Failed to load data');
+    }
+  }, [categoriesService, loadProducts]);
+
+  // Keep only one effect for initial load
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Error handling
+  const handleError = (err: unknown, message: string) => {
+    console.error(err);
+    toast.error(message);
   };
 
   const handleInputChange = (
@@ -220,7 +221,7 @@ export default function ProductsPage() {
       setIsDialogOpen(false);
       setIsEditing(null);
       toast.success(`Produit ${isEditing ? 'modifié' : 'créé'} avec succès`);
-    } catch (error) {
+    } catch { 
       toast.error(`Échec de ${isEditing ? 'modification' : 'création'} du produit`);
     }
   };
@@ -244,7 +245,7 @@ export default function ProductsPage() {
         await productsService.delete(id);
         await loadProducts();
         toast.success('Produit supprimé avec succès');
-      } catch (error) {
+      } catch { 
         toast.error('Échec de la suppression du produit');
       }
     }
@@ -336,7 +337,7 @@ export default function ProductsPage() {
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="alert_threshold">Seuil d'alerte</Label>
+                  <Label htmlFor="alert_threshold">Seuil d&apos;alerte</Label>
                   <Input
                     id="alert_threshold"
                     name="alert_threshold"
@@ -424,7 +425,7 @@ export default function ProductsPage() {
               </TableCell>
               <TableCell>
                 <Badge 
-                  variant={product.stock_quantity <= product.alert_threshold ? "destructive" : "success"}
+                  variant={product.stock_quantity <= product.alert_threshold ? "destructive" : "default"}
                   className="gap-1 items-center"
                 >
                   <Package className="w-3 h-3" />

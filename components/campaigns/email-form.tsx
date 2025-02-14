@@ -52,9 +52,9 @@ export function EmailCampaignForm() {
           toast.success(`Campagne envoyée avec succès`, {
             description: `${recipients.length} emails envoyés`
           })
-        } catch (error) {
+        } catch (error: unknown) {
           toast.error("Échec de l'envoi groupé", {
-            description: "Une erreur s'est produite"
+            description: `Une erreur s'est produite + ${error}`
           })
         }
       } else {
@@ -72,8 +72,8 @@ export function EmailCampaignForm() {
               description: `Progression: ${successCount}/${recipients.length}`
             })
             await sleep(2500) // Attente de 2.5 secondes entre chaque envoi
-          } catch (error) {
-            toast.error(`Échec d'envoi à ${recipient}`)
+          } catch (error: unknown) {
+            toast.error(`Échec d'envoi à ${recipient}. ${error}`)
           }
         }
       }
@@ -83,10 +83,11 @@ export function EmailCampaignForm() {
       setManualEmails('')
       e.currentTarget.reset()
       
-    } catch (error) {
+    } catch (err) {
       toast.error("Erreur lors de l'envoi", {
         description: "Veuillez réessayer plus tard"
-      })
+      });
+      console.error(err);
     } finally {
       setLoading(false)
     }

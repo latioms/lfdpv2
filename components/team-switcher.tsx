@@ -7,15 +7,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function TeamSwitcher({
   companyName,
 }: {
-  companyName: string;
+  readonly companyName: string;
 }) {
-  const { open } = useSidebar()
   return (
     <SidebarMenu>
       <SidebarMenuItem>

@@ -53,11 +53,11 @@ export default function CategoriesPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoriesService, toast]);
+  }, [categoriesService]); // Remove toast from dependencies
 
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, []); // Add loadCategories as dependency
 
   // Ajouter une catégorie
   const handleAddCategory = async (e: React.FormEvent) => {

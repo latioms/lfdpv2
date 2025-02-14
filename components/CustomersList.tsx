@@ -6,7 +6,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { CustomerRecord } from "@/services/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Pencil, Trash2, UserPlus, Mail, Phone, MapPin } from "lucide-react";
 import {
@@ -56,8 +55,8 @@ export default function CustomersList() {
         ? await customersService.search(searchQuery)
         : await customersService.getAll();
       setCustomers(data);
-    } catch (err) {
-      toast.error("Failed to load customers");
+    } catch (err: unknown) {
+      toast.error("Failed to load customers", {description: `Une erreur s'est produite : ${err}`} );
     } finally {
       setLoading(false);
     }
@@ -77,7 +76,7 @@ export default function CustomersList() {
 
       toast.success("Customer added successfully");
     } catch (err) {
-      toast.error("Failed to add customer");
+      toast.error("Failed to add customer",{description: `Une erreur s'est produite : ${err}`});
     }
   };
 
@@ -91,7 +90,7 @@ export default function CustomersList() {
       setEditingCustomer(null);
       toast.success("Customer updated successfully");
     } catch (err) {
-      toast.error("Failed to update customer");
+      toast.error("Failed to update customer", {description: `Une erreur s'est produite : ${err}`});
     }
   };
 
@@ -101,7 +100,7 @@ export default function CustomersList() {
       await loadCustomers();
       toast.success("Customer deleted successfully");
     } catch (err) {
-      toast.error("Failed to delete customer");
+      toast.error("Failed to delete customer", {description: `Une erreur s'est produite : ${err}`});
     }
   };
 

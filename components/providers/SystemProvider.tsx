@@ -5,12 +5,13 @@ import Logger from "js-logger";
 import React, { Suspense, useEffect, useState } from "react";
 import { AppSchema } from "@/lib/powersync/AppSchema";
 import { SupabaseConnector } from "@/lib/powersync/SupabaseConnector";
-
-Logger.useDefaults();
-Logger.setLevel(Logger.DEBUG);
+import { useRouter } from 'next/navigation';
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
+  Logger.useDefaults();
+  Logger.setLevel(Logger.DEBUG);
   const [powerSync, setPowerSync] = useState<PowerSyncDatabase | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const ps = new PowerSyncDatabase({
@@ -23,14 +24,30 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     });
     
     const connector = new SupabaseConnector();
-    ps.connect(connector);
     
+    // Écouter les changements de session
+    connector.registerListener({
+      initialized: () => {},
+      sessionStarted: () => {
+      }
+    });
+
+    ps.connect(connector);
     setPowerSync(ps);
-  }, []);
+
+    // Vérifier la session initiale
+    connector.init().then(() => {
+      if (!connector.currentSession) {
+        router.push('/login');
+      }
+    });
+  }, [router]);
 
   if (!powerSync) {
     return <div>Chargement de la base de données...</div>;
   }
+
+  // Ne pas afficher les enfants s'il n'y a pas de session
 
   return (
     <Suspense fallback={"Chargement..."}>

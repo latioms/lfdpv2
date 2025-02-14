@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   AbstractPowerSyncDatabase,
   BaseObserver,
   CrudEntry,
   PowerSyncBackendConnector,
+  SchemaTableType,
+  Table,
   UpdateType,
 } from "@powersync/web";
 
@@ -91,6 +95,14 @@ export class SupabaseConnector
     this.updateSession(session);
   }
 
+  async logout() {
+    const { error } = await this.client.auth.signOut();
+    if (error) {
+      throw error;
+    }
+    this.updateSession(null);
+  }
+
   async fetchCredentials() {
     const {
       data: { session },
@@ -142,6 +154,7 @@ export class SupabaseConnector
     }
   }
 
+   
   private async handlePutOperation(op: CrudEntry, table: any) {
     const record = { ...op.opData, id: op.id };
     return await table.upsert(record);

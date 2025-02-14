@@ -18,6 +18,37 @@ import {
 import { usePathname } from "next/navigation"
 
 export const Sidebar = ({ children }: { children: React.ReactNode }) => {
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/login';
+
+  const renderBreadcrumbs = () => {
+    return pathname
+      .split('/')
+      .filter(Boolean)
+      .map((path, index, array) => (
+        <React.Fragment key={path}>
+          <BreadcrumbItem className="hidden md:block">
+            {index === array.length - 1 ? (
+              <BreadcrumbPage>
+                {path.charAt(0).toUpperCase() + path.slice(1)}
+              </BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink href={`/${array.slice(0, index + 1).join('/')}`}>
+                {path.charAt(0).toUpperCase() + path.slice(1)}
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+          {index < array.length - 1 && (
+            <BreadcrumbSeparator className="hidden md:block" />
+          )}
+        </React.Fragment>
+      ));
+  };
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -28,27 +59,7 @@ export const Sidebar = ({ children }: { children: React.ReactNode }) => {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
-                {usePathname()
-                  .split('/')
-                  .filter(Boolean)
-                  .map((path, index, array) => (
-                    <React.Fragment key={path}>
-                      <BreadcrumbItem className="hidden md:block">
-                        {index === array.length - 1 ? (
-                          <BreadcrumbPage>
-                            {path.charAt(0).toUpperCase() + path.slice(1)}
-                          </BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink href={`/${array.slice(0, index + 1).join('/')}`}>
-                            {path.charAt(0).toUpperCase() + path.slice(1)}
-                          </BreadcrumbLink>
-                        )}
-                      </BreadcrumbItem>
-                      {index < array.length - 1 && (
-                        <BreadcrumbSeparator className="hidden md:block" />
-                      )}
-                    </React.Fragment>
-                  ))}
+                {renderBreadcrumbs()}
               </BreadcrumbList>
             </Breadcrumb>
           </div>

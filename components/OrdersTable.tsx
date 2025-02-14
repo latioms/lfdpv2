@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,7 @@ import { useServices } from "@/hooks/useService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Calendar, DollarSign, Package, User, Eye, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-react";
+import {Package, Eye, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -48,6 +49,15 @@ type SortConfig = {
   direction: 'asc' | 'desc';
 };
 
+type Order = {
+  id: string;
+  customer_id: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  customer_name: string;
+};
+
 import { formatDate } from "@/lib/utils";
 
 const getStatusBadge = (status: string) => {
@@ -66,7 +76,7 @@ const formatPrice = (amount: number) => {
 
 export function OrdersTable() {
   const { customers, orders: ordersService } = useServices();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,7 +98,7 @@ export function OrdersTable() {
         }));
     
         setOrders(ordersWithCustomerNames);
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors du chargement des commandes", {
           description: "Impossible de récupérer les commandes"
         });
@@ -102,7 +112,7 @@ export function OrdersTable() {
       const details = await ordersService.getWithItems(orderId);
       setSelectedOrder(details);
       setIsDialogOpen(true);
-    } catch (error) {
+    } catch {
       toast.error("Erreur", {
         description: "Impossible de charger les détails de la commande"
       });
@@ -129,8 +139,8 @@ export function OrdersTable() {
       }
 
       toast.success("Statut mis à jour avec succès");
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du statut");
+    } catch (error: unknown) {
+      toast.error("Erreur lors de la mise à jour du statut :" + error);
     }
   };
 
@@ -279,7 +289,7 @@ export function OrdersTable() {
                   <p className="text-sm text-gray-500 mb-2">Statut</p>
                   <Select
                     value={selectedOrder.order.status}
-                    onValueChange={(value) => handleStatusChange(selectedOrder.order.id, value)}
+                    onValueChange={(value) => handleStatusChange(selectedOrder.order.id, value as 'pending' | 'completed' | 'cancelled')}
                     disabled={selectedOrder.order.status === 'completed'}
                   >
                     <SelectTrigger className="w-full">

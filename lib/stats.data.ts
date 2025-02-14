@@ -4,7 +4,6 @@ export type {
   MonthlyRevenue,
   CategorySales,
   TopProduct,
-  StockLevel,
   TopCustomer
 };
 
