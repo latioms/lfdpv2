@@ -7,10 +7,17 @@ export class ProductsService extends BaseService<ProductRecord> {
     super(powerSync, 'products');
   }
 
-  async create(product: Omit<ProductRecord, 'id' | 'created_at' | 'updated_at'>): Promise<void> {
+  async create(product: Omit<ProductRecord, 'id' | 'created_at' | 'updated_at'>): Promise<ProductRecord> {
+    const id = crypto.randomUUID();
+    const now = this.formatDate();
+    const newProduct = {
+      id,
+      ...product,
+      created_at: now,
+      updated_at: now
+    };
+
     try {
-      const id = crypto.randomUUID();
-      const now = this.formatDate();
       await this.powerSync.execute(
         `INSERT INTO products (
           id, name, description, price, stock_quantity, 
@@ -22,6 +29,8 @@ export class ProductsService extends BaseService<ProductRecord> {
           product.category_id, product.image_url, now, now
         ]
       );
+
+      return newProduct;
     } catch (error) {
       console.error('Failed to create product:', error);
       throw error;
@@ -29,6 +38,8 @@ export class ProductsService extends BaseService<ProductRecord> {
   }
 
   async update(id: string, product: Partial<Omit<ProductRecord, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const now = this.formatDate();
+    
     try {
       const updates = Object.entries(product)
         .filter(([, value]) => value !== undefined)
@@ -41,11 +52,59 @@ export class ProductsService extends BaseService<ProductRecord> {
 
       await this.powerSync.execute(
         `UPDATE products SET ${updates}, updated_at = ? WHERE id = ?`,
-        [...values, this.formatDate(), id]
+        [...values, now, id]
       );
     } catch (error) {
       console.error('Failed to update product:', error);
       throw error;
+    }
+  }
+
+  async canDelete(id: string): Promise<{ can: boolean; reason?: string }> {
+    try {
+      const orderItems = await this.powerSync.get(
+        'SELECT COUNT(*) as count FROM order_items WHERE product_id = ?',
+        [id]
+      );
+
+      if (orderItems && orderItems.count > 0) {
+        return {
+          can: false,
+          reason: `Ce produit est utilisé dans ${orderItems.count} commande(s) et ne peut pas être supprimé.`
+        };
+      }
+
+      return { can: true };
+    } catch (error) {
+      console.error('Failed to check product dependencies:', error);
+      throw error;
+    }
+  }
+
+  async safeDelete(id: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const check = await this.canDelete(id);
+      
+      if (!check.can) {
+        return { 
+          success: false, 
+          message: check.reason || 'Le produit ne peut pas être supprimé'
+        };
+      }
+
+      await this.powerSync.execute(
+        'DELETE FROM products WHERE id = ?',
+        [id]
+      );
+
+      return {
+        success: true,
+        message: 'Produit supprimé avec succès'
+      };
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      const message = error instanceof Error ? error.message : 'Erreur lors de la suppression';
+      return { success: false, message };
     }
   }
 
@@ -83,4 +142,4 @@ export class ProductsService extends BaseService<ProductRecord> {
       throw error;
     }
   }
-} 
+}

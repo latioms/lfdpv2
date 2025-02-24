@@ -11,7 +11,7 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="fixed top-4 right-4 ">
+      <div className="fixed top-4 right-4 z-10">
         <Button
           size="lg"
           className="rounded-full w-12 h-12 shadow-lg"

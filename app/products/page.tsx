@@ -83,6 +83,7 @@ export default function ProductsPage() {
 
   const [isRestockDialogOpen, setIsRestockDialogOpen] = useState(false);
   const [restockFormData, setRestockFormData] = useState<RestockFormData>(initialRestockFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getLowStockProducts = () => {
     return products.filter(product => 
@@ -176,53 +177,65 @@ export default function ProductsPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const validateForm = (data: ProductFormData) => {
+  const validateForm = (data: ProductFormData): string | null => {
     if (!data.name.trim()) return 'Le nom est requis';
-    if (isNaN(Number(data.price)) || Number(data.price) <= 0) return 'Prix invalide';
+    if (isNaN(Number(data.price)) || Number(data.price) < 0) 
+      return 'Le prix doit être un nombre positif';
     if (isNaN(Number(data.stock_quantity)) || Number(data.stock_quantity) < 0)
-      return 'Quantité en stock invalide';
+      return 'La quantité en stock doit être un nombre positif';
     if (isNaN(Number(data.alert_threshold)) || Number(data.alert_threshold) < 0)
-      return 'Seuil d\'alerte invalide';
+      return 'Le seuil d\'alerte doit être un nombre positif';
     if (!data.category_id) return 'La catégorie est requise';
     return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validateForm(formData);
-    if (validationError) {
-      toast.error(validationError);
-      return;
-    }
-
+    
     try {
-      if (isEditing) {
-        await productsService.update(isEditing, {
-          name: formData.name,
-          description: formData.description,
-          price: Number(formData.price),
-          stock_quantity: Number(formData.stock_quantity),
-          alert_threshold: Number(formData.alert_threshold),
-          category_id: formData.category_id,
-        });
-      } else {
-        await productsService.create({
-          name: formData.name,
-          description: formData.description,
-          price: Number(formData.price),
-          stock_quantity: Number(formData.stock_quantity),
-          alert_threshold: Number(formData.alert_threshold),
-          category_id: formData.category_id,
-        });
+      setIsSubmitting(true);
+      const validationError = validateForm(formData);
+      if (validationError) {
+        toast.error(validationError);
+        return;
       }
 
-      await loadProducts();
+      const productData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: Number(formData.price),
+        stock_quantity: Number(formData.stock_quantity),
+        alert_threshold: Number(formData.alert_threshold),
+        category_id: formData.category_id,
+      };
+
+      if (isEditing) {
+        // Mise à jour optimiste
+        setProducts(currentProducts => 
+          currentProducts.map(p => 
+            p.id === isEditing ? { ...p, ...productData } : p
+          )
+        );
+        
+        await productsService.update(isEditing, productData);
+        toast.success('Produit modifié avec succès');
+      } else {
+        // Création optimiste
+        const newProduct = await productsService.create(productData);
+        setProducts(currentProducts => [...currentProducts, newProduct]);
+        toast.success('Produit créé avec succès');
+      }
+
       setFormData(initialFormData);
       setIsDialogOpen(false);
       setIsEditing(null);
-      toast.success(`Produit ${isEditing ? 'modifié' : 'créé'} avec succès`);
-    } catch { 
-      toast.error(`Échec de ${isEditing ? 'modification' : 'création'} du produit`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue';
+      toast.error(`Échec de l'opération: ${message}`);
+      // Rechargement en cas d'erreur pour synchroniser l'état
+      await loadProducts();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -242,11 +255,17 @@ export default function ProductsPage() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       try {
-        await productsService.delete(id);
-        await loadProducts();
-        toast.success('Produit supprimé avec succès');
-      } catch { 
-        toast.error('Échec de la suppression du produit');
+        const result = await productsService.safeDelete(id);
+        
+        if (result.success) {
+          await loadProducts();
+          toast.success(result.message);
+        } else {
+          toast.error(result.message);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Échec de la suppression du produit';
+        toast.error(message);
       }
     }
   };
@@ -255,7 +274,15 @@ export default function ProductsPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Produits</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          if (!isSubmitting) {
+            setIsDialogOpen(open);
+            if (!open) {
+              setFormData(initialFormData);
+              setIsEditing(null);
+            }
+          }
+        }}>
           <DialogTrigger asChild>
             <Button
               onClick={() => {
@@ -347,8 +374,19 @@ export default function ProductsPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full">
-                {isEditing ? 'Modifier' : 'Créer'} le produit
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="animate-spin h-4 w-4" />
+                    {isEditing ? 'Modification...' : 'Création...'}
+                  </div>
+                ) : (
+                  <>{isEditing ? 'Modifier' : 'Créer'} le produit</>
+                )}
               </Button>
             </form>
           </DialogContent>

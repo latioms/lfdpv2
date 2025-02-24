@@ -180,4 +180,20 @@ export class OrdersService extends BaseService<OrderRecord> {
       throw error;
     }
   }
+
+  async getRecent(limit: number = 5) {
+    const query = await this.powerSync.getAll(`
+      SELECT 
+        o.id,
+        c.name as customerName,
+        o.created_at as createdAt,
+        o.total_amount as total
+      FROM orders o
+      JOIN customers c ON o.customer_id = c.id
+      ORDER BY o.created_at DESC
+      LIMIT ?
+    `, [limit]);
+
+    return query;
+  }
 }

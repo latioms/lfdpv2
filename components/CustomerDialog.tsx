@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useOrderStore } from '@/store/order.store'
 import { CustomerRecord } from '@/services/types'
 import { useServices } from '@/hooks/useService'
+import { X } from 'lucide-react'
 
 export function CustomerDialog() {
   const { customers } = useServices()
@@ -23,6 +24,17 @@ export function CustomerDialog() {
     address: '',
     phone: '',
   })
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeCustomerDialog()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [closeCustomerDialog])
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query)
@@ -54,7 +66,15 @@ export function CustomerDialog() {
     <Dialog open={isCustomerDialogOpen} onOpenChange={closeCustomerDialog}>
       <div className="fixed inset-0 bg-black/50" />
       <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg">
-        <div className="bg-white rounded-lg shadow-lg p-4">
+        <div className="bg-white rounded-lg shadow-lg p-4 relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-2"
+            onClick={closeCustomerDialog}
+          >
+            <X className="h-4 w-4" />
+          </Button>
           {mode === 'search' ? (
             <>
               <Input
@@ -127,4 +147,4 @@ export function CustomerDialog() {
       </div>
     </Dialog>
   )
-} 
+}

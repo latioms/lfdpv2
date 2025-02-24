@@ -1,4 +1,3 @@
-
 export interface BaseRecord {
   id: string;
   created_at: string;
@@ -27,7 +26,10 @@ export interface CustomerRecord extends BaseRecord {
 }
 
 export interface OrderRecord extends BaseRecord {
-  customer_id: string;
+  id: string;
+  customerId: string;
+  userId: string;
+  createdAt: string;
   total_amount: number;
   status: 'pending' | 'completed' | 'cancelled';
   created_by: string;
@@ -35,10 +37,11 @@ export interface OrderRecord extends BaseRecord {
 }
 
 export interface OrderItemRecord extends BaseRecord {
-  order_id: string;
-  product_id: string;
+  id: string;
+  orderId: string;
+  productId: string;
   quantity: number;
-  unit_price: number;
+  unitPrice: number;
 }
 
 export interface StockMovementRecord extends BaseRecord {
@@ -46,4 +49,4 @@ export interface StockMovementRecord extends BaseRecord {
   quantity: number;
   movement_type: 'purchase' | 'sale' | 'adjustment' | 'return';
   description?: string;
-} 
+}
