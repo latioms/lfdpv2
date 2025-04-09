@@ -32,7 +32,7 @@ import {
 type OrderDetails = {
   order: {
     id: string;
-    customer_id: string;
+    customerId: string;
     total_amount: number;
     status: string;
     created_at: string;
@@ -94,7 +94,8 @@ export function OrdersTable() {
     
         const ordersWithCustomerNames = allOrders.map(order => ({
           ...order,
-          customer_name: allCustomers.find(c => c.id === order.customer_id)?.name || 'Client inconnu'
+          customer_id: order.customerId,
+          customer_name: allCustomers.find(c => c.id === order.customerId)?.name || 'Client inconnu'
         }));
     
         setOrders(ordersWithCustomerNames);

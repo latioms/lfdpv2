@@ -1,9 +1,11 @@
-import React from 'react'
+'use client'
 
-function page() {
-  return (
-    <div>page</div>
-  )
+//rediriger vers la page /home
+
+export default function Page() {
+  if (typeof window !== 'undefined') {
+    window.location.href = '/home'
+  }
+
+  return null
 }
-
-export default page
