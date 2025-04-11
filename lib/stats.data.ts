@@ -173,7 +173,7 @@ export const getTopCustomers = (
 
   orders.forEach(order => {
     if (order.status === 'completed') {
-      const customer = customers.find(c => c.id === order.customer_id);
+      const customer = customers.find(c => c.id === order.customerId);
       if (!customer) return;
 
       if (!customerStats[customer.id]) {

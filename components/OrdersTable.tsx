@@ -111,7 +111,14 @@ export function OrdersTable() {
   const handleRowClick = async (orderId: string) => {
     try {
       const details = await ordersService.getWithItems(orderId);
-      setSelectedOrder(details);
+      setSelectedOrder({
+        order: details.order,
+        items: details.items.map(item => ({
+          product_name: item.product_name,
+          quantity: item.quantity,
+          unit_price: item.unitPrice || 0
+        }))
+      });
       setIsDialogOpen(true);
     } catch {
       toast.error("Erreur", {

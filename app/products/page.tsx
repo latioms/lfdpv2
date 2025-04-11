@@ -47,12 +47,7 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check } from "lucide-react"
 import { cn } from "@/lib/utils";
 
 interface ProductFormData {
@@ -101,7 +96,6 @@ export default function ProductsPage() {
   const [isRestockDialogOpen, setIsRestockDialogOpen] = useState(false);
   const [restockFormData, setRestockFormData] = useState<RestockFormData>(initialRestockFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [supplierOpen, setSupplierOpen] = useState(false);
 
   const getLowStockProducts = () => {
     return products.filter(product => 
@@ -412,7 +406,6 @@ export default function ProductsPage() {
                                   ...prev,
                                   supplier: supplier.id
                                 }));
-                                setSupplierOpen(false);
                               }}
                             >
                               <Check

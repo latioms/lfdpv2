@@ -3,8 +3,7 @@ import { useOrderStore } from "@/store/order.store";
 import { Input } from "@/components/ui/input";
 import { useServices } from "@/hooks/useService";
 import { ProductRecord } from "@/services/types";
-import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "./ui/label";
 

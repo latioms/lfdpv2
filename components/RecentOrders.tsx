@@ -21,7 +21,8 @@ export function RecentOrders() {
     const loadRecentOrders = async () => {
       try {
         setIsLoading(true)
-        const latest = await orders.getRecent(5)
+        /* eslint-disable  @typescript-eslint/no-explicit-any */
+        const latest: any  = await orders.getRecent(5)
         console.log('Received orders:', latest) // Pour le débogage
         if (Array.isArray(latest)) {
           setRecentOrders(latest)
