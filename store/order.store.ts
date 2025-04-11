@@ -12,7 +12,6 @@ interface OrderItem {
 interface OrderState {
   items: OrderItem[]
   customer: Customer | null
-  isSearchOpen: boolean
   isCustomerDialogOpen: boolean
   searchQuery: string
   isOrderDrawerOpen: boolean
@@ -20,7 +19,6 @@ interface OrderState {
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
   setCustomer: (customer: Customer) => void
-  toggleSearch: () => void
   toggleCustomerDialog: () => void
   setSearchQuery: (query: string) => void
   clearOrder: () => void
@@ -64,7 +62,6 @@ export const useOrderStore = create(
         })),
 
       setCustomer: (customer) => set({ customer }),
-      toggleSearch: () => set((state) => ({ isSearchOpen: !state.isSearchOpen })),
       toggleCustomerDialog: () => set((state) => ({ isCustomerDialogOpen: !state.isCustomerDialogOpen })),
       closeCustomerDialog: () => set({ isCustomerDialogOpen: false }),
       openCustomerDialog: () => set({ isCustomerDialogOpen: true }),
@@ -74,16 +71,27 @@ export const useOrderStore = create(
         customer: null, 
         searchQuery: '',
         isCustomerDialogOpen: false,
-        isSearchOpen: false 
       }),
       toggleOrderDrawer: () => set((state) => ({ isOrderDrawerOpen: !state.isOrderDrawerOpen })),
     }),
     {
       name: 'order-storage',
-      partialize: (state): Partial<OrderState> => ({
+      partialize: (state): OrderState => ({
         items: state.items,
         customer: state.customer,
-        isOrderDrawerOpen: state.isOrderDrawerOpen
+        isOrderDrawerOpen: state.isOrderDrawerOpen,
+        isCustomerDialogOpen: false,
+        searchQuery: '',
+        addItem: state.addItem,
+        removeItem: state.removeItem,
+        updateQuantity: state.updateQuantity,
+        setCustomer: state.setCustomer,
+        toggleCustomerDialog: state.toggleCustomerDialog,
+        setSearchQuery: state.setSearchQuery,
+        clearOrder: state.clearOrder,
+        closeCustomerDialog: state.closeCustomerDialog,
+        openCustomerDialog: state.openCustomerDialog,
+        toggleOrderDrawer: state.toggleOrderDrawer
       })
     }
   )

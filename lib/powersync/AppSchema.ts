@@ -14,6 +14,7 @@ const products = new Table({
     stock_quantity: column.integer,
     alert_threshold: column.integer,
     category_id: column.text,
+    supplier: column.integer,
     image_url: column.text,
     created_at: column.text,
     updated_at: column.text
@@ -63,6 +64,13 @@ const reports = new Table({
     created_at: column.text
 });
 
+const suppliers = new Table({
+    id: column.integer,
+    name: column.text,
+    phone: column.text,
+    created_at: column.text,
+});
+
 const stock_movements = new Table({
     id: column.text,
     product_id: column.text,
@@ -77,11 +85,13 @@ export const AppSchema = new Schema({
     products,
     users,
     customers,
+    suppliers,
     orders,
     order_items,
     reports,
     stock_movements
 });
+
 
 export type Database = (typeof AppSchema)['types'];
 export type CategoriesRecord = Database['categories'];
@@ -92,3 +102,5 @@ export type OrdersRecord = Database['orders'];
 export type OrderItemsRecord = Database['order_items'];
 export type ReportsRecord = Database['reports'];
 export type StockMovementsRecord = Database['stock_movements'];
+export type SuppliersRecord = Database['suppliers'];
+export type CreateCategoryDTO = Pick<CategoriesRecord, 'name'>;

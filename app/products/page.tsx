@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useServices } from '@/hooks/useService';
-import { ProductRecord, CategoryRecord } from '@/services/types';
+import { ProductRecord, CategoryRecord, SupplierRecord } from '@/services/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +40,20 @@ import {
   Package,
   RefreshCw
 } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils";
 
 interface ProductFormData {
   name: string;
@@ -48,6 +62,7 @@ interface ProductFormData {
   stock_quantity: string;
   alert_threshold: string;
   category_id: string;
+  supplier: number;
 }
 
 interface RestockFormData {
@@ -69,13 +84,15 @@ const initialFormData: ProductFormData = {
   stock_quantity: '',
   alert_threshold: '',
   category_id: '',
+  supplier: 0,
 };
 
 export default function ProductsPage() {
-  const { products: productsService, categories: categoriesService, stock: stockService } = useServices();
+  const { products: productsService, categories: categoriesService, stock: stockService, suppliers: suppliersService } = useServices();
 
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -84,6 +101,7 @@ export default function ProductsPage() {
   const [isRestockDialogOpen, setIsRestockDialogOpen] = useState(false);
   const [restockFormData, setRestockFormData] = useState<RestockFormData>(initialRestockFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [supplierOpen, setSupplierOpen] = useState(false);
 
   const getLowStockProducts = () => {
     return products.filter(product => 
@@ -147,13 +165,17 @@ export default function ProductsPage() {
   // Keep loadData as useCallback but update dependencies
   const loadData = useCallback(async () => {
     try {
-      const categoriesData = await categoriesService.getAll();
+      const [categoriesData, suppliersData] = await Promise.all([
+        categoriesService.getAll(),
+        suppliersService.getAll()
+      ]);
       setCategories(categoriesData);
+      setSuppliers(suppliersData);
       await loadProducts();
     } catch (err) {
       handleError(err, 'Failed to load data');
     }
-  }, [categoriesService, loadProducts]);
+  }, [categoriesService, suppliersService, loadProducts]);
 
   // Keep only one effect for initial load
   useEffect(() => {
@@ -207,6 +229,7 @@ export default function ProductsPage() {
         stock_quantity: Number(formData.stock_quantity),
         alert_threshold: Number(formData.alert_threshold),
         category_id: formData.category_id,
+        supplier: formData.supplier || 0,
       };
 
       if (isEditing) {
@@ -247,6 +270,7 @@ export default function ProductsPage() {
       stock_quantity: product.stock_quantity.toString(),
       alert_threshold: product.alert_threshold.toString(),
       category_id: product.category_id,
+      supplier: product.supplier || 0,
     });
     setIsEditing(product.id);
     setIsDialogOpen(true);
@@ -373,6 +397,36 @@ export default function ProductsPage() {
                     onChange={handleInputChange}
                   />
                 </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="supplier">Fournisseur</Label>
+                      <Command>
+                        <CommandInput placeholder="Rechercher un fournisseur..." />
+                        <CommandEmpty>Aucun fournisseur trouvé.</CommandEmpty>
+                        <CommandGroup>
+                          {suppliers.map((supplier) => (
+                            <CommandItem
+                              key={supplier.id}
+                              value={supplier.name}
+                              onSelect={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  supplier: supplier.id
+                                }));
+                                setSupplierOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.supplier === supplier.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {supplier.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                </div>
               </div>
               <Button 
                 type="submit" 
@@ -444,6 +498,7 @@ export default function ProductsPage() {
             <TableHead>Prix</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead>Seuil</TableHead>
+            <TableHead>Fournisseur</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -471,6 +526,7 @@ export default function ProductsPage() {
                 </Badge>
               </TableCell>
               <TableCell>{product.alert_threshold}</TableCell>
+              <TableCell>{product.supplier_name}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   <Button

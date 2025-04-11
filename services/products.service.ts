@@ -7,6 +7,20 @@ export class ProductsService extends BaseService<ProductRecord> {
     super(powerSync, 'products');
   }
 
+  async getAll(): Promise<ProductRecord[]> {
+    try {
+      return await this.powerSync.getAll(`
+        SELECT p.*, s.name as supplier_name 
+        FROM products p 
+        LEFT JOIN suppliers s ON p.supplier = s.id 
+        ORDER BY p.created_at DESC
+      `);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+      throw error;
+    }
+  }
+
   async create(product: Omit<ProductRecord, 'id' | 'created_at' | 'updated_at'>): Promise<ProductRecord> {
     const id = crypto.randomUUID();
     const now = this.formatDate();
@@ -21,12 +35,13 @@ export class ProductsService extends BaseService<ProductRecord> {
       await this.powerSync.execute(
         `INSERT INTO products (
           id, name, description, price, stock_quantity, 
-          alert_threshold, category_id, image_url, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          alert_threshold, category_id, supplier_id, image_url, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id, product.name, product.description, product.price,
           product.stock_quantity, product.alert_threshold,
-          product.category_id, product.image_url, now, now
+          product.category_id, product.supplier,
+          product.image_url, now, now
         ]
       );
 
@@ -62,7 +77,7 @@ export class ProductsService extends BaseService<ProductRecord> {
 
   async canDelete(id: string): Promise<{ can: boolean; reason?: string }> {
     try {
-      const orderItems = await this.powerSync.get(
+      const orderItems = await this.powerSync.get<{ count: number }>(
         'SELECT COUNT(*) as count FROM order_items WHERE product_id = ?',
         [id]
       );
@@ -134,7 +149,11 @@ export class ProductsService extends BaseService<ProductRecord> {
   async search(query: string): Promise<ProductRecord[]> {
     try {
       return await this.powerSync.getAll(
-        'SELECT * FROM products WHERE name LIKE ? OR description LIKE ? ORDER BY name',
+        `SELECT p.*, s.name as supplier_name 
+         FROM products p 
+         LEFT JOIN suppliers s ON p.supplier_id = s.id 
+         WHERE p.name LIKE ? OR p.description LIKE ? 
+         ORDER BY p.name`,
         [`%${query}%`, `%${query}%`]
       );
     } catch (error) {

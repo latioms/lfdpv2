@@ -8,6 +8,7 @@ import {
   BarChart2,
   ClipboardList,
   FileText,
+  Factory,
 } from "lucide-react";
 
 export const data = {
@@ -31,6 +32,7 @@ export const data = {
         { title: "Clients", url: "/customers", icon: Users },
         { title: "Produits", url: "/products", icon: Package },
         { title: "Campagnes", url: "/campaigns", icon: Megaphone },
+        { title: "Fournisseurs", url: "/suppliers", icon: Factory },
       ],
     },
     {

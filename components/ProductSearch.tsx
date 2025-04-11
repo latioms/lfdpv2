@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { useServices } from "@/hooks/useService";
 import { ProductRecord } from "@/services/types";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { toast } from "sonner";
+import { Label } from "./ui/label";
 
 export function ProductSearch() {
   const { products } = useServices();
-  const { isSearchOpen, toggleSearch, searchQuery, setSearchQuery, addItem } =
+  const { searchQuery, setSearchQuery, addItem } =
     useOrderStore();
   const [productsList, setProductsList] = useState<ProductRecord[]>([]);
 
@@ -35,59 +37,57 @@ export function ProductSearch() {
       name: product.name,
       price: product.price,
     });
+    toast.success(
+      `${product.name} a été ajouté à la commande !`
+    );
     setSearchQuery("");
-    toggleSearch();
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "k") {
-        e.preventDefault();
-        toggleSearch();
-      }
-      // Ajouter la gestion de la touche Escape
-      if (e.key === "Escape") {
-        e.preventDefault();
-        toggleSearch();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSearch]);
-
-  if (!isSearchOpen) return null;
 
   return (
     <>
-      <div className="inset-0 z-40" onClick={toggleSearch} />
-      <div className="fixed left-1/2 top-4 -translate-x-1/2 w-full max-w-2xl">
-        <div className="bg-white rounded-lg shadow-xl p-4 mx-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-6 top-6"
-            onClick={toggleSearch}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-          <Input
-            placeholder="Rechercher un produit..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
-            className="rounded-md"
-          />
+      <div className="relative left-1/2 top-12 -translate-x-1/2 w-full max-w-xl">
+        <div className="bg-white rounded-lg shadow-sm ">
+          <div className="relative flex">
+            <Label htmlFor="search" className="sr-only"></Label>
+            <Input
+              placeholder="Rechercher un produit..."
+
+              value={searchQuery}
+              id='search'
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+              className="pl-8 border border-gray-300 focus:outline focus:outline-sky-500 focus:border-green-400/30 focus:ring-0 focus:ring-sky-500 focus-visible:ring-none"
+            />
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
+          </div>
           {productsList.length > 0 && (
             <div className="mt-2">
               {productsList.map((product) => (
                 <div
                   key={product.id}
-                  className="p-2 hover:bg-gray-100 cursor-pointer rounded"
-                  onClick={() => handleAddProduct(product)}
+                  className={`p-2 ${product.stock_quantity > 0
+                      ? "hover:bg-green-100 cursor-pointer"
+                      : "bg-gray-50 cursor-not-allowed opacity-60"
+                    } rounded`}
+                  onClick={() => {
+                    if (product.stock_quantity > 0) {
+                      handleAddProduct(product);
+                    } else {
+                      toast.error(`${product.name} est en rupture en stock`);
+                    }
+                  }}
                 >
-                  <div className="flex justify-between items-center">
-                    <span>{product.name}</span>
-                    <span>{product.price} XAF</span>
+                  <div className="flex justify-between items-start">
+                    <div className="">
+                      <span className="font-semibold font-mono text-green-700 text-lg">{product.name}</span>
+                      <div className="text-sm font-light text-orange-900/40 ">
+                        {product.stock_quantity > 0
+                          ? `Stock: ${product.stock_quantity}`
+                          : "Rupture de stock"}
+                      </div>
+                    </div>
+                    <span className="font-semibold font-mono text-gray-900/95">{product.price} <span className="font-extralight text-sm text-gray-500">XAF</span></span>
                   </div>
                 </div>
               ))}

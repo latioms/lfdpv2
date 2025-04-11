@@ -5,7 +5,8 @@ import {
   ProductsService,
   CustomersService,
   OrdersService,
-  StockService
+  StockService,
+  SuppliersService
 } from '@/services';
 
 export function useServices() {
@@ -20,6 +21,7 @@ export function useServices() {
     products: new ProductsService(powerSync),
     customers: new CustomersService(powerSync),
     orders: new OrdersService(powerSync),
-    stock: new StockService(powerSync)
+    stock: new StockService(powerSync),
+    suppliers: new SuppliersService(powerSync),
   };
 }

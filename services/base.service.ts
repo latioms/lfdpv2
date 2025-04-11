@@ -13,7 +13,7 @@ export abstract class BaseService<T extends BaseRecord> {
     }
   }
 
-  async getById(id: string): Promise<T | null> {
+  async getById(id: any): Promise<T | null> {
     try {
       const results = await this.powerSync.getAll<T>(
         `SELECT * FROM ${this.tableName} WHERE id = ?`,
@@ -26,7 +26,7 @@ export abstract class BaseService<T extends BaseRecord> {
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: any): Promise<void> {
     try {
       await this.powerSync.execute(
         `DELETE FROM ${this.tableName} WHERE id = ?`,

@@ -12,3 +12,4 @@ bucket_definitions:
       - SELECT * FROM order_items
       - SELECT * FROM reports
       - SELECT * FROM stock_movements
+      - SELECT * FROM suppliers

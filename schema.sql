@@ -15,6 +15,7 @@ create table public.products (
   stock_quantity integer not null,
   alert_threshold integer not null,
   category_id uuid references public.categories,
+  supplier_id uuid references public.suppliers,
   image_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()),
   updated_at timestamp with time zone default timezone('utc'::text, now())
@@ -77,6 +78,23 @@ create table public.stock_movements (
   description text,
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
+
+DROP TABLE IF EXISTS suppliers;
+CREATE TABLE suppliers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX idx_suppliers_name ON suppliers(name);
+CREATE INDEX idx_suppliers_created_at ON suppliers(created_at);
+
+CREATE TRIGGER update_suppliers_updated_at 
+    BEFORE UPDATE ON suppliers 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Triggers
 create or replace function update_updated_at_column()
