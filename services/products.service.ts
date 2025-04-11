@@ -35,7 +35,7 @@ export class ProductsService extends BaseService<ProductRecord> {
       await this.powerSync.execute(
         `INSERT INTO products (
           id, name, description, price, stock_quantity, 
-          alert_threshold, category_id, supplier_id, image_url, created_at, updated_at
+          alert_threshold, category_id, supplier, image_url, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id, product.name, product.description, product.price,
