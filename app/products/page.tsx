@@ -506,7 +506,7 @@ export default function ProductsPage() {
               </TableCell>
               <TableCell className="font-medium">
                 <Badge variant="secondary">
-                  ${product.price.toFixed(2)}
+                  XAF {product.price}
                 </Badge>
               </TableCell>
               <TableCell>
