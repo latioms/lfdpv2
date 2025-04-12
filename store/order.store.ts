@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { CustomerRecord as Customer } from '@/services/types'
 
-interface OrderItem {
+export interface OrderItem {
   id: string
   quantity: number
   price: number

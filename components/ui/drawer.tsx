@@ -16,9 +16,9 @@ export function Drawer({ children, isOpen, onToggle, side = "right" }: DrawerPro
   return (
     <div
       className={cn(
-        "fixed top-0 bottom-0 w-[360px] bg-white shadow-lg border transition-all duration-300 ease-in-out",
+        "fixed top-0 bottom-0 w-full sm:max-w-md md:max-w-lg bg-white shadow-lg border transition-all duration-300 ease-in-out",
         side === "right" ? "right-0 border-l" : "left-0 border-r",
-        isOpen ? "translate-x-0" : side === "right" ? "translate-x-[360px]" : "-translate-x-[360px]"
+        isOpen ? "translate-x-0" : side === "right" ? "translate-x-full" : "-translate-x-full"
       )}
     >
       <Button

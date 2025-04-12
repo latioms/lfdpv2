@@ -151,7 +151,7 @@ export class ProductsService extends BaseService<ProductRecord> {
       return await this.powerSync.getAll(
         `SELECT p.*, s.name as supplier_name 
          FROM products p 
-         LEFT JOIN suppliers s ON p.supplier_id = s.id 
+         LEFT JOIN suppliers s ON p.supplier = s.id 
          WHERE p.name LIKE ? OR p.description LIKE ? 
          ORDER BY p.name`,
         [`%${query}%`, `%${query}%`]

@@ -8,10 +8,7 @@ export class OrdersService extends BaseService<OrderRecord> {
   }
 
   async create(
-    customerId: string,
-    items: Array<{ productId: string; quantity: number; unitPrice: number }>,
-    createdBy: string
-  ): Promise<string> {
+customerId: string, items: Array<{ productId: string; quantity: number; unitPrice: number; }>, createdBy: string, paymentMethod: string  ): Promise<string> {
     try {
       const orderId = crypto.randomUUID();
       const now = this.formatDate();
