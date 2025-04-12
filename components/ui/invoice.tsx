@@ -110,7 +110,7 @@ export function Invoice({ customer, items, subtotal, tax, total }: InvoiceProps)
             <div className="grid grid-cols-2 gap-1">
               <p className="font-semibold">Date de facturation:</p>
               <p>{currentDate}</p>
-              <p className="font-semibold">Date d'échéance:</p>
+              <p className="font-semibold">Date d&apos;échéance:</p>
               <p>{dueDate}</p>
               <p className="font-semibold">Conditions de paiement:</p>
               <p>Net 30</p>
